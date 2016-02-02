@@ -49,6 +49,20 @@ module Packageiq
         parse_info(info)
       end
 
+      # adds available update info to package_info hash
+      def updateable(package_info, updates)
+        update_info = { update_available: 'no', update_version: '',
+                        update_repo: '' }
+        updates.each do |update|
+          next unless update[:name] == package_info[:name]
+          update_info[:update_available]  = 'yes'
+          update_info[:update_version]    = update[:version]
+          update_info[:update_repo]       = update[:repo]
+          break
+        end
+        package_info.merge(update_info)
+      end
+
       private
 
       # use command handler to run command
