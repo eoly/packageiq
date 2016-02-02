@@ -31,19 +31,25 @@ module Packageiq
         @command_handler = Packageiq::Command.new
       end
 
-      # list all installed rpms
+      # returns array of installed packages
       def installed
-        run('rpm -qa')
+        installed = run('rpm -qa')
+        installed.split("\n")
       end
 
-      # list of available updates
+      # returns array of available yum update hashes
       def updates
-        run('yum list updates')
+        updates = run('yum list updates')
+        parse_list(updates)
       end
 
+      # returns hash of rpm info
       def info(package)
-        run("rpm -qi #{package}")
+        info = run("rpm -qi #{package}")
+        parse_info(info)
       end
+
+      private
 
       # use command handler to run command
       def run(command)
