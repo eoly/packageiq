@@ -1,4 +1,5 @@
 require 'packageiq/command'
+require 'socket'
 
 module Packageiq
   module Provider
@@ -25,10 +26,12 @@ module Packageiq
         'Summary'         => :summary
       }
 
-      attr_accessor :command_handler
+      attr_reader :command_handler, :hostname, :collection_time
 
       def initialize
-        @command_handler = Packageiq::Command.new
+        @command_handler  = Packageiq::Command.new
+        @hostname         = Socket.gethostname
+        @collection_time  = Time.new
       end
 
       # returns array of installed packages
@@ -51,8 +54,8 @@ module Packageiq
 
       # adds available update info to package_info hash
       def updateable(package_info, updates)
-        update_info = { update_available: 'no', update_version: '',
-                        update_repo: '' }
+        update_info = { update_available: 'no', update_version: '-',
+                        update_repo: '-' }
         updates.each do |update|
           next unless update[:name] == package_info[:name]
           update_info[:update_available]  = 'yes'
@@ -61,6 +64,13 @@ module Packageiq
           break
         end
         package_info.merge(update_info)
+      end
+
+      # serialize package_info object for transport
+      # returns json string
+      def serialize(package_info)
+        run_info = { host: hostname, collection_time: collection_time }
+        package_info.merge(run_info).to_json
       end
 
       private
