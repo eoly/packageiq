@@ -4,7 +4,7 @@ require 'socket'
 module Packageiq
   module Provider
     # rhel based system package provider
-    class Rhel
+    class RHEL
       # mapping for yum info field name to symbol
       RPM_INFO_KEY = {
         'Name'            => :name,
