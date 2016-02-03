@@ -61,7 +61,7 @@ module Packageiq
           package_info  = info(package)
           package_entry = updateable(package_info, updates_array)
           package_entry.merge!(host: hostname, collection_time: collection_time)
-          inventory << packge_entry
+          inventory << package_entry
         end
         inventory
       end
