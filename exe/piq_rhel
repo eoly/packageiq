@@ -6,8 +6,8 @@ require 'packageiq/provider/rhel'
 require 'packageiq/transport/rabbitmq'
 require 'packageiq/version'
 
-# name of rabbitmq queue
-QUEUE = 'packages'
+# default name of rabbitmq queue
+QUEUE = 'packageiq.packages'
 
 # read CLI arguments
 options = Packageiq::CLI.read
@@ -20,7 +20,8 @@ config = loader.load
 rmq = Packageiq::Transport::Rabbitmq.new(config[:rabbitmq])
 rmq.start
 rmq.create_channel
-queue = rmq.create_queue(QUEUE)
+queue_name = config[:rabbitmq][:queue] ? config[:rabbitmq][:queue] : QUEUE
+queue = rmq.create_queue(queue_name)
 
 # get packages and updates
 piq = Packageiq::Provider::RHEL.new
@@ -36,5 +37,9 @@ packages.each do |package|
   package_info  = piq.info(package)
   package_entry = piq.updateable(package_info, updates)
   message       = piq.serialize(package_entry)
-  queue.publish(message, routing_key: queue.name)
+  queue.publish(message,
+                routing_key: queue.name,
+                type: 'rhel_package',
+                content_type: 'application/json',
+                app_id: "piq_rhel #{Packageiq::VERSION}")
 end
