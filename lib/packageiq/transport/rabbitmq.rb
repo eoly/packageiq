@@ -23,7 +23,7 @@ module Packageiq
 
       # serialize message
       def self.serialize(message)
-        JSON.parse(message)
+        message.to_json
       end
 
       attr_reader :conn
