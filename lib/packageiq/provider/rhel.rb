@@ -26,7 +26,7 @@ module Packageiq
         'Summary'         => :summary
       }
 
-      attr_reader :command_handler, :hostname, :collection_time
+      attr_reader :command_handler, :hostname, :timestamp
 
       def initialize
         @command_handler  = Packageiq::Command.new
