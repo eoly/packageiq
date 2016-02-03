@@ -31,7 +31,7 @@ module Packageiq
       def initialize
         @command_handler  = Packageiq::Command.new
         @hostname         = Socket.gethostname
-        @collection_time  = Time.new
+        @timestamp        = Time.new
       end
 
       # returns array of installed packages
@@ -52,6 +52,23 @@ module Packageiq
         parse_info(info)
       end
 
+      # returns redhat relase string
+      def rhel_release
+        run('cat /etc/redhat-release')
+      end
+
+      # returns hash of server info
+      def server_info
+        {
+          server:
+          {
+            hostname: hostname,
+            os_release: rhel_release,
+            collection_time: timestamp
+          }
+        }
+      end
+
       # build full package inventory
       # returns array of package_entry hashes
       def build_inventory
@@ -60,7 +77,7 @@ module Packageiq
         installed.each do |package|
           package_info  = info(package)
           package_entry = updateable(package_info, updates_array)
-          package_entry.merge!(host: hostname, collection_time: collection_time)
+          package_entry.merge!(server_info)
           inventory << package_entry
         end
         inventory
@@ -68,13 +85,12 @@ module Packageiq
 
       # adds available update info to package_info hash
       def updateable(package_info, updates)
-        update_info = { update_available: 'no', update_version: '-',
-                        update_repo: '-' }
+        update_info = { update: { available: 'no', version: '-', repo: '-' } }
         updates.each do |update|
-          next unless update[:name] == package_info[:name]
-          update_info[:update_available]  = 'yes'
-          update_info[:update_version]    = update[:version]
-          update_info[:update_repo]       = update[:repo]
+          next unless update[:name] == package_info[:package][:name]
+          update_info[:update][:available]  = 'yes'
+          update_info[:update][:version]    = update[:version]
+          update_info[:update][:repo]       = update[:repo]
           break
         end
         package_info.merge(update_info)
@@ -96,6 +112,7 @@ module Packageiq
 
       # parse list output to hash, return array of hashes
       def parse_list(list)
+        package_info  = { name: '', arch: '', version: '', repo: '' }
         list          = unwrap(list)
         lines         = list.split("\n")
         package_list  = []
@@ -103,11 +120,11 @@ module Packageiq
           next if line =~ Regexp.new(/^(Installed|Updated) Packages$/)
           parts   = line.split
           package = parts[0]
-          name    = package.split('.')[0]
-          arch    = package.split('.')[1]
-          version = parts[1]
-          repo    = parts[2]
-          package_list << { name: name, arch: arch, version: version, repo: repo }
+          package_info[:name] = package.split('.')[0]
+          package_info[:arch] = package.split('.')[1]
+          package_info[:version] = parts[1]
+          package_info[:repo]    = parts[2]
+          package_list << package_info
         end
         package_list
       end
@@ -115,12 +132,12 @@ module Packageiq
       # parse rpm info into hash
       def parse_info(info)
         lines      = info.split("\n")
-        info_hash  = {}
+        info_hash  = { package: {} }
         lines.each do |line|
           RPM_INFO_KEY.each do |field, symbol|
             parse_regex = Regexp.new("^(#{field})+\s+:{1}\s+(.*)$")
             parts = parse_regex.match(line)
-            info_hash[symbol] = parts[2] if parts
+            info_hash[:package][symbol] = parts[2] if parts
           end
         end
         info_hash
