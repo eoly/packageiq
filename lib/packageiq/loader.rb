@@ -49,7 +49,9 @@ module Packageiq
     end
 
     # load file contents into settings hash
+    # only loads .json files. does not load dotfiles
     def load_file(file_path)
+      return unless File.fnmatch('**.json', file_path)
       handle = File.open(file_path)
       contents = handle.read
       config_hash = parse_contents(contents)
