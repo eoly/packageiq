@@ -1,4 +1,5 @@
 require 'bunny'
+require 'json'
 
 module Packageiq
   module Transport
@@ -7,6 +8,7 @@ module Packageiq
       attr_accessor :host, :port, :tls,
                     :tls_cert, :tls_key, :tls_ca_certificates,
                     :vhost, :user, :pass
+
       def initialize(args = {})
         @host                   = args[:host] || '127.0.0.1'
         @port                   = args[:port] || 5672
@@ -19,26 +21,38 @@ module Packageiq
         @pass                   = args[:pass] || 'guest'
       end
 
+      # serialize message
+      def self.serialize(message)
+        JSON.parse(message)
+      end
+
       attr_reader :conn
+
+      # initialize bunny instance and start connection
       def start
         @conn = Bunny.new(host: host, port: port,
                           tls: tls, tls_cert: tls_cert,
                           tls_key: tls_key,
                           tls_ca_certificates: tls_ca_certificates,
                           vhost: vhost, user: user, pass: pass)
-        conn.start
+        @conn.start
       end
 
       attr_reader :channel
+
+      # create rabbitmq channel
       def create_channel
         @channel = conn.create_channel
       end
 
+      # close rabbitmq channel
       def close_channel
         @channel.close_channel
       end
 
       attr_reader :queue
+
+      # create rabbitmq queue
       def create_queue(name, opts = {})
         durable     = opts[:durable] || false
         auto_delete = opts[:auto_delete] || false
@@ -49,6 +63,8 @@ module Packageiq
                                     exclusive: exclusive)
       end
 
+      # check if queue exists
+      # returns boolean
       def queue_exists?(name)
         conn.queue_exists?(name)
       end

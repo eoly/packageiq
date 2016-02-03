@@ -52,6 +52,20 @@ module Packageiq
         parse_info(info)
       end
 
+      # build full package inventory
+      # returns array of package_entry hashes
+      def build_inventory
+        inventory = []
+        updates_array = updates
+        packages.each do |package|
+          package_info  = info(package)
+          package_entry = updateable(package_info, updates_array)
+          package_entry.merge!(host: hostname, collection_time: collection_time)
+          inventory << packge_entry
+        end
+        inventory
+      end
+
       # adds available update info to package_info hash
       def updateable(package_info, updates)
         update_info = { update_available: 'no', update_version: '-',
@@ -64,13 +78,6 @@ module Packageiq
           break
         end
         package_info.merge(update_info)
-      end
-
-      # serialize package_info object for transport
-      # returns json string
-      def serialize(package_info)
-        run_info = { host: hostname, collection_time: collection_time }
-        package_info.merge(run_info).to_json
       end
 
       private
