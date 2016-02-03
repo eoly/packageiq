@@ -142,7 +142,13 @@ module Packageiq
                 }
               },
               build_date: {
-                type: 'date'
+                type: 'string',
+                fields: {
+                  raw: {
+                    type: 'string',
+                    index: 'not_analyzed'
+                  }
+                }
               },
               build_host: {
                 type: 'string',
