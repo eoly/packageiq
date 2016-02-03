@@ -57,7 +57,7 @@ module Packageiq
       def build_inventory
         inventory = []
         updates_array = updates
-        packages.each do |package|
+        installed.each do |package|
           package_info  = info(package)
           package_entry = updateable(package_info, updates_array)
           package_entry.merge!(host: hostname, collection_time: collection_time)
