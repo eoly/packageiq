@@ -6,38 +6,54 @@ module Packageiq
     CONFIG_DIR = '/etc/packageiq'
 
     attr_accessor :config_dir, :config_file
+    attr_reader :settings
+
+    # can accept options hash from CLI class
     def initialize(options = {})
       @config_dir   = options[:config_dir] || CONFIG_DIR
       @config_file  = options[:config_file] || nil
+      @settings     = {}
     end
 
+    # load config file settings
+    # return hash of all settings
     def load
-      settings = {}
       if config_file
-        settings.merge!(load_file)
+        full_path = full_path(config_dir, config_file)
+        load_file(full_path)
       else
-        settings.merge!(load_dir)
+        load_dir(config_dir)
       end
       settings
     end
 
-    def load_dir
-      content = {}
-      Dir.entries(config_dir).each do |entry|
-        next unless entry =~ /.*\.json$/
-        if File.file?("#{config_dir}/#{entry}")
-          @config_file = entry
-          content.merge!(load_file)
-        end
-      end
-      content
+    private
+
+    # joins to parts to form full path
+    # returns full path to file or directory
+    def full_path(part1, part2)
+      File.join(part1, part2)
     end
 
-    # return json object
-    def load_file
-      file = File.open("#{config_dir}/#{config_file}")
-      contents = file.read
-      parse_contents(contents)
+    # recursively load config files from directory
+    def load_dir(directory)
+      Dir.entries(directory).each do |entry|
+        next if entry == '..' || entry == '.'
+        full_path = full_path(directory, entry)
+        if File.file?(full_path)
+          load_file(full_path)
+        elsif File.directory?(full_path)
+          load_dir(full_path)
+        end
+      end
+    end
+
+    # load file contents into settings hash
+    def load_file(file_path)
+      handle = File.open(file_path)
+      contents = handle.read
+      config_hash = parse_contents(contents)
+      settings.merge!(config_hash)
     end
 
     def parse_contents(contents)
