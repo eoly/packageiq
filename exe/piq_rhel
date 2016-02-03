@@ -20,23 +20,15 @@ config = loader.load
 rmq = Packageiq::Transport::Rabbitmq.new(config[:rabbitmq])
 rmq.start
 rmq.create_channel
-queue_name = config[:rabbitmq][:queue] ? config[:rabbitmq][:queue] : QUEUE
-queue = rmq.create_queue(queue_name)
+queue_name  = config[:rabbitmq][:queue] ? config[:rabbitmq][:queue] : QUEUE
+queue       = rmq.create_queue(queue_name)
 
-# get packages and updates
-piq = Packageiq::Provider::RHEL.new
-packages  = piq.installed
-updates   = piq.updates
+# get package inventory
+piq       = Packageiq::Provider::RHEL.new
+inventory = piq.build_inventory
 
-# process package and update inventory
-# builds package inventory entry by combining
-# update info and package information
-# turns inventory entry into serialized json message
-# sends to rabbitmq
-packages.each do |package|
-  package_info  = piq.info(package)
-  package_entry = piq.updateable(package_info, updates)
-  message       = piq.serialize(package_entry)
+inventory.each do |package_entry|
+  message = Packageiq::Transport::Rabbitmq.serialize(package_entry)
   queue.publish(message,
                 routing_key: queue.name,
                 type: 'rhel_package',
