@@ -113,11 +113,11 @@ module Packageiq
 
       # parse list output to hash, return array of hashes
       def parse_list(list)
-        package_info  = { name: '', arch: '', version: '', repo: '' }
         list          = unwrap(list)
         lines         = list.split("\n")
         package_list  = []
         lines.each do |line|
+          package_info = {}
           next if line =~ Regexp.new(/^(Installed|Updated) Packages$/)
           parts   = line.split
           package = parts[0]
