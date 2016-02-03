@@ -26,12 +26,13 @@ module Packageiq
         'Summary'         => :summary
       }
 
-      attr_reader :command_handler, :hostname, :timestamp
+      attr_reader :command_handler, :hostname, :timestamp, :os_release
 
       def initialize
         @command_handler  = Packageiq::Command.new
         @hostname         = Socket.gethostname
         @timestamp        = Time.new
+        @os_release       = rhel_release.strip
       end
 
       # returns array of installed packages
@@ -63,7 +64,7 @@ module Packageiq
           server:
           {
             hostname: hostname,
-            os_release: rhel_release,
+            os_release: os_release,
             collection_time: timestamp
           }
         }
