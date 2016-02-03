@@ -1,0 +1,40 @@
+#!/usr/bin/env ruby
+
+require 'packageiq/cli'
+require 'packageiq/loader'
+require 'packageiq/provider/rhel'
+require 'packageiq/transport/rabbitmq'
+require 'packageiq/version'
+
+# name of rabbitmq queue
+QUEUE = 'packages'
+
+# read CLI arguments
+options = Packageiq::CLI.read
+
+# load settings from config files
+loader = Packageiq::Loader.new(options)
+config = loader.load
+
+# setup rabbitmq
+rmq = Packageiq::Transport::Rabbitmq.new(config[:rabbitmq])
+rmq.start
+rmq.create_channel
+queue = rmq.create_queue(QUEUE)
+
+# get packages and updates
+piq = Packageiq::Provider::RHEL.new
+packages  = piq.installed
+updates   = piq.updates
+
+# process package and update inventory
+# builds package inventory entry by combining
+# update info and package information
+# turns inventory entry into serialized json message
+# sends to rabbitmq
+packages.each do |package|
+  package_info  = piq.info(package)
+  package_entry = piq.updateable(package_info, updates)
+  message       = piq.serialize(package_entry)
+  queue.publish(message, routing_key: queue.name)
+end
