@@ -192,7 +192,13 @@ module Packageiq
                 }
               },
               collection_time: {
-                type: 'date'
+                type: 'string',
+                fields: {
+                  raw: {
+                    type: 'string',
+                    index: 'not_analyzed'
+                  }
+                }
               }
             }
           }
