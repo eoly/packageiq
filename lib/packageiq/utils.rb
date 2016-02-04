@@ -1,5 +1,13 @@
 module Packageiq
   module Utils
+    def self.amqp_uri(options = {})
+      vhost     = options[:vhost] == '/' ? '/' : ''
+      scheme    = options[:tls] ? 'amqps://' : 'amqp://'
+      userinfo  = options[:user] + ':' + options[:pass]
+      authority = userinfo + '@' + options[:host] + ':' + options[:port].to_s
+      scheme + authority + vhost
+    end
+
     def self.rpmvercmp(str1, str2)
       return 0 if str1 == str2
 
