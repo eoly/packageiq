@@ -6,9 +6,6 @@ require 'packageiq/provider/rhel'
 require 'packageiq/transport/rabbitmq'
 require 'packageiq/version'
 
-# default name of rabbitmq queue
-QUEUE = 'packageiq.packages'
-
 # read CLI arguments
 options = Packageiq::CLI.read
 
@@ -20,7 +17,7 @@ config = loader.load
 rmq = Packageiq::Transport::Rabbitmq.new(config[:rabbitmq])
 rmq.start
 rmq.create_channel
-queue_name  = config[:rabbitmq][:queue] ? config[:rabbitmq][:queue] : QUEUE
+queue_name  = config[:rabbitmq][:queue]
 queue       = rmq.create_queue(queue_name)
 
 # get package inventory
@@ -31,7 +28,7 @@ inventory.each do |package_entry|
   message = Packageiq::Transport::Rabbitmq.serialize(package_entry)
   queue.publish(message,
                 routing_key: queue.name,
-                type: 'rhel_package',
+                type: 'rhel',
                 content_type: 'application/json',
                 app_id: "piq_rhel #{Packageiq::VERSION}")
 end
