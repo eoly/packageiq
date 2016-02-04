@@ -136,7 +136,7 @@ module Packageiq
         info_hash  = { package: {} }
         lines.each do |line|
           RPM_INFO_KEY.each do |field, symbol|
-            parse_regex = Regexp.new("^(#{field})+\s+:{1}\s+(.*)$")
+            parse_regex = Regexp.new("^(#{field})+\s*:{1}\s+(.*)$")
             parts = parse_regex.match(line)
             info_hash[:package][symbol] = parts[2] if parts
           end
