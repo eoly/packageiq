@@ -141,6 +141,15 @@ module Packageiq
                   }
                 }
               },
+              install_date: {
+                type: 'string',
+                fields: {
+                  raw: {
+                    type: 'string',
+                    index: 'not_analyzed'
+                  }
+                }
+              },
               build_date: {
                 type: 'string',
                 fields: {
