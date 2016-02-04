@@ -48,6 +48,15 @@ module Packageiq
                   }
                 }
               },
+              arch: {
+                type: 'string',
+                fields: {
+                  raw: {
+                    type: 'string',
+                    index: 'not_analyzed'
+                  }
+                }
+              },
               name: {
                 type: 'string',
                 fields: {
