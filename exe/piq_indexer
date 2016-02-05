@@ -1,0 +1,77 @@
+#!/usr/bin/env ruby
+
+require 'packageiq/cli'
+require 'packageiq/utils'
+require 'packageiq/loader'
+require 'packageiq/version'
+require 'sneakers'
+require 'sneakers/runner'
+require 'elasticsearch'
+require 'base64'
+require 'json'
+
+# read CLI arguments
+options = Packageiq::CLI.read
+
+# load settings from config files
+loader = Packageiq::Loader.new(options)
+config = loader.load
+
+begin
+  ES_SETTINGS       = config[:elasticsearch]
+
+  AMQP_SETTINGS     = { amqp: Packageiq::Utils.amqp_uri(config[:rabbitmq]),
+                        exchange: 'piq_indexer',
+                        exchange_type: :direct,
+                        exchange_options: { durable: false },
+                        heartbeat: 20 }.merge(config[:rabbitmq])
+
+  INDEXER_SETTINGS  = { daemonize: false,
+                        start_worker_delay: 0.2,
+                        workers: 2,
+                        timeout_after_job: 5,
+                        threads: 5,
+                        prefetch: 5,
+                        ack: true }.merge(config[:indexer])
+rescue
+  raise 'Configuration Error. Check config files for rabbitmq, indexer, and elasticsearch settings.'
+end
+
+# Configure Elasticsearch Client
+$es_client = Elasticsearch::Client.new(ES_SETTINGS)
+
+Sneakers.configure(AMQP_SETTINGS.merge(INDEXER_SETTINGS))
+Sneakers.logger.level = Logger::INFO
+
+# Sneakers worker class for indexing packages
+class Indexer
+  include Sneakers::Worker
+
+  from_queue(AMQP_SETTINGS[:queue],
+             durable: false,
+             hooks: {
+               after_fork: lambda do
+                 $es_client.transport.reload_connections!
+               end
+             })
+
+  # calculates document id for elasticsearch
+  def make_id(msg)
+    msg_hash  = JSON.parse(msg)
+    hostname  = msg_hash['server']['hostname']
+    package   = msg_hash['package']['name']
+    arch      = msg_hash['package']['arch']
+    Base64.encode64(hostname + package + arch)
+  end
+
+  def work_with_params(msg, _delivery_info, metadata)
+    id = make_id(msg)
+    type = metadata[:type]
+    logger.info "Document ID: #{id} Type: #{type}"
+    $es_client.index index: ES_SETTINGS[:index], type: type, id: id, body: msg
+    ack!
+  end
+end
+
+sneakers = Sneakers::Runner.new([Indexer])
+sneakers.run
