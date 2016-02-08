@@ -1,0 +1,11 @@
+{
+  "elasticsearch": {
+    "hosts":
+      [
+        {"host":"localhost","port":9200}
+      ],
+    "randomize_hosts":true,
+    "retry_on_failure":true,
+    "index": "packageiq"
+  }
+}

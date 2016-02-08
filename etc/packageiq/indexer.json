@@ -1,0 +1,6 @@
+{
+  "indexer": {
+    "workers" : 10,
+    "threads" : 2
+  }
+}
