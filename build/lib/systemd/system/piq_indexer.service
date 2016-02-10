@@ -6,7 +6,8 @@ Type=simple
 User=packageiq
 Group=packageiq
 ExecStart=/usr/local/bin/piq_indexer 
-Restart=always
+StandardOutput=syslog
+StandardError=syslog
 
 [Install]
 WantedBy=multi-user.target
