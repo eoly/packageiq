@@ -1,0 +1,11 @@
+{
+  "rabbitmq" : {
+    "host" : "localhost",
+    "port" : 5672,
+    "tls" : false,
+    "vhost": "/",
+    "user" : "guest",
+    "pass" : "guest",
+    "queue": "packageiq.packages"
+  }
+}

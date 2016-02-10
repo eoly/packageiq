@@ -1,0 +1,12 @@
+[Unit]
+Description=PackageIQ Indexer
+ 
+[Service]
+Type=simple
+User=packageiq
+Group=packageiq
+ExecStart=/usr/local/bin/piq_indexer 
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
