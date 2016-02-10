@@ -2,9 +2,10 @@
 
 set -e
 
-useradd -c "PackageIQ User" -M -U -s "/sbin/nologin" packageiq
+useradd -c "PackageIQ User" -d /home/packageiq -m -U -s "/sbin/nologin" packageiq
 
 chown -R root:root /etc/packageiq
-chmod -R 644 /etc/packageiq
+chmod 0755 /etc/packageiq
+chmod 0644 /etc/packageiq/*
 
 systemctl daemon-reload
