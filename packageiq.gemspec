@@ -33,4 +33,7 @@ Gem::Specification.new do |spec|
 
   spec.add_development_dependency 'bundler', '~> 1.10'
   spec.add_development_dependency 'rake', '~> 10.0'
+  spec.add_development_dependency 'pleaserun', '~> 0.0.16'
+  spec.add_development_dependency 'fpm', '~> 1.4.0'
+  spec.add_development_dependency 'fpm-cookery', '~> 0.31.0'
 end
