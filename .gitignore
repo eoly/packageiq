@@ -9,3 +9,5 @@
 /tmp/
 /.ruby-version
 /scratch/
+/build/pkg/
+/build/recipes/cache/
