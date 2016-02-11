@@ -1,12 +1,12 @@
 class PackageIQ < FPM::Cookery::Recipe
   name 'packageiq'
-  version '0.1.0'
+  version '0.1.2'
 
   source '', :with => :noop
 
   description 'PackageIQ'
 
-  maintainer 'Eric Olsen <eric@ericolsen.net'
+  maintainer 'Eric Olsen <eric@ericolsen.net>'
 
   homepage 'https://github.com/eoly/packageiq'
 
