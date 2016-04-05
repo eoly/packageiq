@@ -5,25 +5,25 @@ module Packageiq
   module Provider
     # rhel based system package provider
     class RHEL
-      # mapping for yum info field name to symbol
+      # mapping of yum info query tags to symbol
       RPM_INFO_KEY = {
-        'Name'            => :name,
-        'Epoch'           => :epoch,
-        'Version'         => :version,
-        'Release'         => :release,
-        'Architecture'    => :arch,
-        'Install Date'    => :install_date,
-        'Group'           => :group,
-        'Size'            => :size,
-        'License'         => :license,
-        'Signature'       => :signature,
-        'Source RPM'      => :source_rpm,
-        'Build Date'      => :build_date,
-        'Build Host'      => :build_host,
-        'Packager'        => :packager,
-        'Vendor'          => :vendor,
-        'URL'             => :url,
-        'Summary'         => :summary
+        :name         => '%{NAME}',
+        :epoch        => '%{EPOCH}',
+        :version      => '%{VERSION}',
+        :release      => '%{RELEASE}',
+        :arch         => '%{ARCH}',
+        :install_date => '%{INSTALLTIME:date}',
+        :group        => '%{GROUP}',
+        :size         => '%{SIZE}',
+        :license      => '%{LICENSE}',
+        :signature    => '%|DSAHEADER?{%{DSAHEADER:pgpsig}}:{%|RSAHEADER?{%{RSAHEADER:pgpsig}}:{%|SIGGPG?{%{SIGGPG:pgpsig}}:{%|SIGPGP?{%{SIGPGP:pgpsig}}:{(none)}|}|}|}|',
+        :source_rpm   => '%{SOURCERPM}',
+        :build_date   => '%{BUILDTIME:date}',
+        :build_host   => '%{BUILDHOST}',
+        :packager     => '%{PACKAGER}',
+        :vendor       => '%{VENDOR}',
+        :url          => '%{URL}',
+        :summary      => '%{SUMMARY}'
       }
 
       attr_reader :command_handler, :hostname, :timestamp, :os_release
@@ -49,7 +49,11 @@ module Packageiq
 
       # returns hash of rpm info
       def info(package)
-        info = run("rpm -qi #{package}")
+        queryformat = ''
+        RPM_INFO_KEY.each do |symbol, query|
+          queryformat += "#{symbol}: #{query}\\n"
+        end
+        info = run("rpm -q --queryformat \"#{queryformat}\" #{package}")
         parse_info(info)
       end
 
@@ -135,8 +139,8 @@ module Packageiq
         lines      = info.split("\n")
         info_hash  = { package: {} }
         lines.each do |line|
-          RPM_INFO_KEY.each do |field, symbol|
-            parse_regex = Regexp.new("^(#{field})+\s*:{1}\s+(.*)$")
+          RPM_INFO_KEY.each do |symbol, query|
+            parse_regex = Regexp.new("^(#{symbol})+\s*:{1}\s{1}(.*)$")
             parts = parse_regex.match(line)
             info_hash[:package][symbol] = parts[2] if parts
           end
